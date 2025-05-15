@@ -3,7 +3,6 @@ import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import '../core/transaction_callback.dart';
 
 class ZainpayInAppBrowser extends InAppBrowser {
-
   final TransactionCallBack callBack;
   var hasCompletedProcessing = false;
   var haveCallBacksBeenCalled = false;
@@ -11,12 +10,12 @@ class ZainpayInAppBrowser extends InAppBrowser {
   ZainpayInAppBrowser({required this.callBack});
 
   @override
-  Future onBrowserCreated() async {
-
+  Future<void> onBrowserCreated() async {
+    // Browser created
   }
 
   @override
-  Future onLoadStart(url) async {
+  Future<void> onLoadStart(WebUri? url) async {
     final status = url?.queryParameters["status"];
     final txRef = url?.queryParameters["txnRef"];
     final id = url?.queryParameters["txnRef"];
@@ -27,7 +26,7 @@ class ZainpayInAppBrowser extends InAppBrowser {
     }
   }
 
-  _processResponse(Uri url, String? status, String? txRef, String? id) {
+  void _processResponse(WebUri url, String? status, String? txRef, String? id) {
     if ("success" == status) {
       callBack.onTransactionSuccess(id!, txRef!, url.toString());
     } else {
@@ -38,15 +37,15 @@ class ZainpayInAppBrowser extends InAppBrowser {
   }
 
   @override
-  Future onLoadStop(url) async {}
+  Future<void> onLoadStop(WebUri? url) async {}
 
   @override
-  void onLoadError(url, code, message) {
+  void onLoadError(Uri? url, int code, String message) {
     callBack.onTransactionError();
   }
 
   @override
-  void onProgressChanged(progress) {}
+  void onProgressChanged(int progress) {}
 
   @override
   void onExit() {

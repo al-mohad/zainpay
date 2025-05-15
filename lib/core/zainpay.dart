@@ -2,82 +2,149 @@ import 'package:flutter/material.dart';
 import 'package:zainpay/models/request/initialize_card_payment_request.dart';
 import 'package:zainpay/models/request/update_zainbox_request.dart';
 import 'package:zainpay/models/response/initialize_card_payment_response.dart';
-import '/models/request/create_settlement_request.dart';
-import '/models/request/create_va_request.dart';
+import 'package:zainpay/utils/logger.dart';
+import 'package:zainpay/utils/secure_storage.dart';
+
 import '/models/request/create_zainbox_request.dart';
-import '/models/request/fund_transfer_request.dart';
-import '/models/request/get_account_name_request.dart';
 import '/models/request/get_all_zainboxes_request.dart';
-import '/models/request/get_bank_list_request.dart';
-import '/models/request/get_va_balance_request.dart';
-import '/models/request/get_va_transactions_request.dart';
-import '/models/request/get_zainbox_collection_summary_by_date_request.dart';
-import '/models/request/get_zainbox_vas_balances_request.dart';
-import '/models/request/update_va_status_request.dart';
-import '/models/request/zainbox_transactions_request.dart';
-import '/models/response/account_name_response.dart';
-import '/models/response/bank_list_response.dart';
-import '/models/response/create_settlement_response.dart';
-import '/models/response/create_va_response.dart';
-import '/models/response/deposit_verification_response.dart';
-import '/models/response/fund_transfer_response.dart';
 import '/models/response/get_all_zainbox_accounts_response.dart';
 import '/models/response/get_all_zainboxes_response.dart';
-import '/models/response/transfer_verification_response.dart';
-import '/models/response/update_va_status_response.dart';
-import '/models/response/va_balance_response.dart';
-import '/models/response/va_transactions_response.dart';
-import '/models/response/zainbox_collection_summary_by_date_response.dart';
-import '/models/response/zainbox_transaction_history_response.dart';
-import '/models/response/zainbox_va_balances_response.dart';
-
-import '../models/request/deposit_verification_request.dart';
 import '../models/request/get_all_zainbox_va_request.dart';
-import '../models/request/transfer_verification_request.dart';
 import '../models/response/create_zainbox_response.dart';
 
+/// Main class for interacting with the Zainpay API
 class Zainpay {
-
   final BuildContext context;
   final String publicKey;
   final bool isTest;
 
-  const Zainpay({
+  // Logger instance
+  late final ZainpayLogger _logger;
+
+  // Secure storage instance
+  late final SecureStorage _secureStorage;
+
+  /// Creates a new Zainpay instance
+  ///
+  /// @param context The BuildContext
+  /// @param publicKey The public key for the Zainpay API
+  /// @param isTest Whether to use the test environment
+  Zainpay({
     required this.context,
     required this.publicKey,
     required this.isTest,
-  });
-
-  Future<CreateZainboxResponse?> createZainbox(name, tags, callbackUrl, email) async {
-    CreateZainboxRequest createZainboxRequest = CreateZainboxRequest(
-        name: name,
-        tags: tags,
-        callbackUrl: callbackUrl,
-        email: email,
-        publicKey: publicKey,
-        isTest: isTest
-    );
-
-    return await createZainboxRequest.createZainbox();
+  }) {
+    _logger = ZainpayLogger();
+    _secureStorage = SecureStorage();
   }
 
-  Future<CreateZainboxResponse?> updateZainbox(zainboxCode, name, tags, callbackUrl, email) async {
-    UpdateZainboxRequest updateZainboxRequest = UpdateZainboxRequest(
-        zainboxCode: zainboxCode,
+  /// Creates a new Zainbox
+  ///
+  /// @param name The name of the Zainbox
+  /// @param tags Tags for the Zainbox
+  /// @param callbackUrl The callback URL for the Zainbox
+  /// @param email The email for the Zainbox
+  /// @return A future that completes with the response
+  Future<CreateZainboxResponse?> createZainbox(
+    String name,
+    String tags,
+    String callbackUrl,
+    String email,
+  ) async {
+    try {
+      _logger.info('Creating Zainbox: $name');
+
+      final createZainboxRequest = CreateZainboxRequest(
         name: name,
         tags: tags,
         callbackUrl: callbackUrl,
         email: email,
         publicKey: publicKey,
         isTest: isTest,
-    );
+      );
 
-    return await updateZainboxRequest.updateZainbox();
+      final response = await createZainboxRequest.createZainbox();
+
+      if (response != null) {
+        _logger
+            .info('Zainbox created successfully: ${response.data?.codeName}');
+      } else {
+        _logger.warning('Failed to create Zainbox');
+      }
+
+      return response;
+    } catch (e, stackTrace) {
+      _logger.error('Error creating Zainbox', error: e, stackTrace: stackTrace);
+      rethrow;
+    }
   }
 
-  Future<CardPaymentResponse?> initializeCardPayment({amount, txnRef, mobileNumber,
-      zainboxCode, email, callbackUrl}) async {
-    CardPaymentRequest createZainboxRequest = CardPaymentRequest(
+  /// Updates an existing Zainbox
+  ///
+  /// @param zainboxCode The code of the Zainbox to update
+  /// @param name The new name of the Zainbox
+  /// @param tags The new tags for the Zainbox
+  /// @param callbackUrl The new callback URL for the Zainbox
+  /// @param email The new email for the Zainbox
+  /// @return A future that completes with the response
+  Future<CreateZainboxResponse?> updateZainbox(
+    String zainboxCode,
+    String? name,
+    String? tags,
+    String? callbackUrl,
+    String? email,
+  ) async {
+    try {
+      _logger.info('Updating Zainbox: $zainboxCode');
+
+      // Convert null values to empty strings to satisfy the API requirements
+      final updateZainboxRequest = UpdateZainboxRequest(
+        zainboxCode: zainboxCode,
+        name: name ?? "",
+        tags: tags ?? "",
+        callbackUrl: callbackUrl ?? "",
+        email: email ?? "",
+        publicKey: publicKey,
+        isTest: isTest,
+      );
+
+      final response = await updateZainboxRequest.updateZainbox();
+
+      if (response != null) {
+        _logger
+            .info('Zainbox updated successfully: ${response.data?.codeName}');
+      } else {
+        _logger.warning('Failed to update Zainbox');
+      }
+
+      return response;
+    } catch (e, stackTrace) {
+      _logger.error('Error updating Zainbox', error: e, stackTrace: stackTrace);
+      rethrow;
+    }
+  }
+
+  /// Initializes a card payment
+  ///
+  /// @param amount The amount to charge
+  /// @param txnRef The transaction reference
+  /// @param mobileNumber The mobile number of the customer
+  /// @param zainboxCode The Zainbox code
+  /// @param email The email of the customer
+  /// @param callbackUrl The callback URL for the payment
+  /// @return A future that completes with the response
+  Future<CardPaymentResponse?> initializeCardPayment({
+    required String amount,
+    required String txnRef,
+    required String mobileNumber,
+    required String zainboxCode,
+    required String email,
+    required String callbackUrl,
+  }) async {
+    try {
+      _logger.info('Initializing card payment: $txnRef');
+
+      final cardPaymentRequest = CardPaymentRequest(
         txnRef: txnRef,
         amount: amount,
         mobileNumber: mobileNumber,
@@ -85,181 +152,83 @@ class Zainpay {
         emailAddress: email,
         callBackUrl: callbackUrl,
         publicKey: publicKey,
-        isTest: isTest
-    );
-
-    return await createZainboxRequest.initializeCardPayment();
-  }
-
-  Future<GetAllZainboxesResponse?> getAllZainboxes() async {
-    GetAllZainboxesRequest getAllZainboxesRequest = GetAllZainboxesRequest(
         isTest: isTest,
-      publicKey: publicKey
-    );
+      );
 
-    return await getAllZainboxesRequest.getAllZainboxes();
+      final response = await cardPaymentRequest.initializeCardPayment();
+
+      if (response != null) {
+        _logger.info('Card payment initialized successfully');
+      } else {
+        _logger.warning('Failed to initialize card payment');
+      }
+
+      return response;
+    } catch (e, stackTrace) {
+      _logger.error('Error initializing card payment',
+          error: e, stackTrace: stackTrace);
+      rethrow;
+    }
   }
 
-  Future<ZainboxAccountResponse?> getAllZainboxAccounts({zainboxCodeName}) async {
-    GetAllZainboxAccountsRequest getAllZainboxAccountsRequest = GetAllZainboxAccountsRequest(
+  /// Gets all Zainboxes
+  ///
+  /// @return A future that completes with the response
+  Future<GetAllZainboxesResponse?> getAllZainboxes() async {
+    try {
+      _logger.info('Getting all Zainboxes');
+
+      final getAllZainboxesRequest = GetAllZainboxesRequest(
+        isTest: isTest,
+        publicKey: publicKey,
+      );
+
+      final response = await getAllZainboxesRequest.getAllZainboxes();
+
+      if (response != null) {
+        _logger.info('Got all Zainboxes successfully');
+      } else {
+        _logger.warning('Failed to get all Zainboxes');
+      }
+
+      return response;
+    } catch (e, stackTrace) {
+      _logger.error('Error getting all Zainboxes',
+          error: e, stackTrace: stackTrace);
+      rethrow;
+    }
+  }
+
+  /// Gets all accounts for a Zainbox
+  ///
+  /// @param zainboxCodeName The code or name of the Zainbox
+  /// @return A future that completes with the response
+  Future<ZainboxAccountResponse?> getAllZainboxAccounts({
+    required String zainboxCodeName,
+  }) async {
+    try {
+      _logger.info('Getting all accounts for Zainbox: $zainboxCodeName');
+
+      final getAllZainboxAccountsRequest = GetAllZainboxAccountsRequest(
         zainboxCodeName: zainboxCodeName,
         publicKey: publicKey,
-        isTest: isTest
-    );
+        isTest: isTest,
+      );
 
-    return getAllZainboxAccountsRequest.getAllZainboxAccounts();
-  }
+      final response =
+          await getAllZainboxAccountsRequest.getAllZainboxAccounts();
 
-  Future<VirtualAccountBalanceResponse?> getVirtualAccountBalance({accountNumber}) async {
-    GetVirtualAccountBalanceRequest getVirtualAccountBalanceRequest = GetVirtualAccountBalanceRequest(
-        accountNumber: accountNumber,
-        publicKey: publicKey,
-        isTest: isTest
-    );
+      if (response != null) {
+        _logger.info('Got all Zainbox accounts successfully');
+      } else {
+        _logger.warning('Failed to get all Zainbox accounts');
+      }
 
-    return getVirtualAccountBalanceRequest.getVirtualAccountBalance();
-  }
-
-  Future<ZainboxVirtualAccountsBalancesResponse?> getZainboxVirtualAccountBalance({zainboxCode}) async {
-    GetZainboxVirtualAccountsBalancesRequest getZainboxVirtualAccountsBalancesRequest = GetZainboxVirtualAccountsBalancesRequest(
-        zainboxCode: zainboxCode,
-        publicKey: publicKey,
-        isTest: isTest
-    );
-
-    return getZainboxVirtualAccountsBalancesRequest.getZainboxVirtualAccountsBalances();
-  }
-
-  Future<VirtualAccountTransactionsResponse?> getVirtualAccountTransactions({accountNumber, int? count}) async {
-    GetVirtualAccountTransactionsRequest getVirtualAccountTransactionsRequest = GetVirtualAccountTransactionsRequest(
-        accountNumber: accountNumber,
-        publicKey: publicKey,
-        count: 100, // optional default at 20
-        isTest: isTest
-    );
-
-    return getVirtualAccountTransactionsRequest.getVirtualAccountTransactions();
-  }
-
-  Future<BankListResponse?> getBankList() async {
-    GetBankListRequest getBankListRequest = GetBankListRequest(
-        publicKey: publicKey,
-        isTest: isTest
-    );
-
-    return getBankListRequest.getBankListRequest();
-  }
-
-  Future<AccountNameResponse?> getAccountName({bankCode, accountNumber}) async {
-    AccountNameRequest accountNameRequest = AccountNameRequest(
-        accountNumber: accountNumber,
-        bankCode: bankCode,
-        publicKey: publicKey,
-        isTest: isTest
-    );
-
-    return accountNameRequest.getAccountName();
-  }
-
-  Future<TransferVerificationResponse?> verifyTransfer({txnRef}) async {
-    TransferVerificationRequest transferVerificationRequest = TransferVerificationRequest(
-        txnRef: txnRef,
-        publicKey: publicKey,
-        isTest: isTest
-    );
-
-    return transferVerificationRequest.verifyTransfer();
-  }
-
-  Future<DepositVerificationResponse?> verifyDeposit({txnRef}) async {
-    DepositVerificationRequest depositVerificationRequest = DepositVerificationRequest(
-        txnRef: txnRef,
-        publicKey: publicKey,
-        isTest: isTest
-    );
-
-    return depositVerificationRequest.verifyDeposit();
-  }
-
-  Future<ZainboxTransactionHistoryResponse?> getZainboxTransactionHistory({zainboxCode, int? count}) async {
-    ZainboxTransactionsRequest zainboxTransactionsRequest = ZainboxTransactionsRequest(
-        zainboxCode: zainboxCode,
-        publicKey: publicKey,
-        count: 100, // optional default at 20
-        isTest: isTest
-    );
-
-    return zainboxTransactionsRequest.getZainboxTransactionsHistory();
-  }
-
-  Future<ZainboxCollectionSummaryByDateResponse?> getZainboxCollectionSummaryByDate({zainboxCode, dateFrom, dateTo}) async {
-    ZainboxCollectionSummaryByDateRequest zainboxCollectionSummaryByDateRequest = ZainboxCollectionSummaryByDateRequest(
-        zainboxCode: zainboxCode,
-        publicKey: publicKey,
-        isTest: isTest
-    );
-
-    return zainboxCollectionSummaryByDateRequest.getSummary();
-  }
-
-  Future<CreateVirtualAccountResponse?> createVirtualAccount({fullName, email,
-      mobileNumber, zainboxCode}) async {
-    CreateVirtualAccountRequest createVirtualAccountRequest = CreateVirtualAccountRequest(
-        email: email,
-        mobileNumber: mobileNumber,
-        zainboxCode: zainboxCode,
-        fullName: fullName,
-        publicKey: publicKey,
-        isTest: isTest
-    );
-
-    return await createVirtualAccountRequest.createVirtualAccount();
-  }
-
-  Future<CreateSettlementResponse?> createSettlement({name, scheduleType, schedulePeriod,
-      settlementList, status, zainboxCode}) async {
-    CreateSettlementRequest createSettlementRequest = CreateSettlementRequest(
-        name: name,
-        zainboxCode: zainboxCode,
-        scheduleType: scheduleType,
-        schedulePeriod: schedulePeriod,
-        settlementAccountList: settlementList,
-        status: status,
-        publicKey: publicKey,
-        isTest: isTest
-    );
-
-    return await createSettlementRequest.createSettlement();
-  }
-
-  Future<FundTransferResponse?> transferFund({destinationAccountNumber, destinationBankCode,
-      amount, txnRef, narration, sourceAccountNumber, sourceBankCode, zainboxCode}) async {
-    FundTransferRequest fundTransferRequest = FundTransferRequest(
-        destinationAccountNumber: destinationAccountNumber,
-        destinationBankCode: destinationBankCode,
-        amount: amount,
-        sourceAccountNumber: sourceAccountNumber,
-        sourceBankCode: sourceBankCode,
-        zainboxCode: zainboxCode,
-        txnRef: txnRef,
-        narration: narration,
-        publicKey: publicKey,
-        isTest: isTest
-    );
-
-    return await fundTransferRequest.transferFund();
-  }
-
-  Future<UpdateVirtualAccountStatusResponse?> updateVirtualAccountStatus({status,
-      accountNumber, zainboxCode}) async {
-    UpdateVirtualAccountStatusRequest updateVirtualAccountStatusRequest = UpdateVirtualAccountStatusRequest(
-        accountNumber: accountNumber,
-        status: status,
-        zainboxCode: zainboxCode,
-        publicKey: publicKey,
-        isTest: isTest
-    );
-
-    return await updateVirtualAccountStatusRequest.updateVirtualAccountStatus();
+      return response;
+    } catch (e, stackTrace) {
+      _logger.error('Error getting all Zainbox accounts',
+          error: e, stackTrace: stackTrace);
+      rethrow;
+    }
   }
 }

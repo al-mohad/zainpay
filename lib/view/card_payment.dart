@@ -1,22 +1,21 @@
 import 'package:flutter/material.dart';
-import 'package:zainpay/models/response/payment_response.dart';
 import 'package:zainpay/models/request/standard_request.dart';
+import 'package:zainpay/models/response/payment_response.dart';
 import 'package:zainpay/view/view_utils.dart';
+
 import '../core/navigation_controller.dart';
 import '../core/transaction_callback.dart';
 
 class CardPayment extends StatefulWidget {
-
   final StandardRequest request;
   final String? sessionId;
   final BuildContext context;
 
-  const CardPayment({
-    Key? key,
-    required this.request,
-    required this.sessionId,
-    required this.context
-  }) : super(key: key);
+  const CardPayment(
+      {super.key,
+      required this.request,
+      this.sessionId,
+      required this.context});
 
   @override
   CardPaymentState createState() => CardPaymentState();
@@ -24,7 +23,6 @@ class CardPayment extends StatefulWidget {
 
 class CardPaymentState extends State<CardPayment>
     implements TransactionCallBack {
-
   final _navigatorKey = GlobalKey<NavigatorState>();
   late NavigationController controller;
 
@@ -73,17 +71,14 @@ class CardPaymentState extends State<CardPayment>
 
   @override
   onTransactionSuccess(String id, String txRef, String callbackUrl) {
-    OTPValidationDataResponse otpValidationDataResponse = OTPValidationDataResponse(
-        callBackUrl: callbackUrl,
-        txnRef: txRef
-    );
+    OTPValidationDataResponse otpValidationDataResponse =
+        OTPValidationDataResponse(callBackUrl: callbackUrl, txnRef: txRef);
 
     final PaymentResponse chargeResponse = PaymentResponse(
         status: "success",
         description: 'Payment Successful',
         code: "00",
-        otpValidationDataResponse: otpValidationDataResponse
-    );
+        otpValidationDataResponse: otpValidationDataResponse);
 
     Navigator.pop(widget.context, chargeResponse);
   }

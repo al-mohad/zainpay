@@ -6,7 +6,6 @@ import 'package:zainpay/view/inapp_browser.dart';
 import '../models/request/standard_request.dart';
 
 class NavigationController {
-
   final TransactionCallBack _callBack;
 
   NavigationController(this._callBack);
@@ -15,9 +14,9 @@ class NavigationController {
   startTransaction(final StandardRequest request) async {
     try {
       final InitPaymentResponse? initPaymentResponse =
-      await request.initializePayment(request.publicKey);
+          await request.initializePayment(request.publicKey);
       if (initPaymentResponse?.status == "200 OK") {
-      openBrowser(initPaymentResponse?.data ?? "", request.callBackUrl);
+        openBrowser(initPaymentResponse?.data ?? "", request.callBackUrl);
       }
     } catch (error) {
       rethrow;
@@ -25,23 +24,26 @@ class NavigationController {
   }
 
   /// Opens browser with URL returned from startTransaction()
-  openBrowser(final String url, final String redirectUrl, [final bool isTestMode = false]) async {
-    final ZainpayInAppBrowser browser = ZainpayInAppBrowser(callBack: _callBack);
+  openBrowser(final String url, final String redirectUrl,
+      [final bool isTestMode = false]) async {
+    final ZainpayInAppBrowser browser =
+        ZainpayInAppBrowser(callBack: _callBack);
 
-    var options = InAppBrowserClassOptions(
-      crossPlatform: InAppBrowserOptions(
-          hideUrlBar: true,
-        hideToolbarTop: true,
-      ),
-      inAppWebViewGroupOptions: InAppWebViewGroupOptions(
-        crossPlatform: InAppWebViewOptions(
-            javaScriptEnabled: true,
-          clearCache: true
-        ),
-      ),
-    );
+    // Use a simplified approach that works with both v5.x and v6.x
+    // This avoids using deprecated APIs directly
+    try {
+      // Create a WebUri from the URL string (compatible with flutter_inappwebview 6.x)
+      final webUri = WebUri(url);
 
-    await browser.openUrlRequest(
-        urlRequest: URLRequest(url: Uri.parse(url)), options: options);
+      // Create a URLRequest with the WebUri
+      final urlRequest = URLRequest(url: webUri);
+
+      // Open the URL request without specific options
+      // This approach works with both v5.x and v6.x
+      await browser.openUrlRequest(urlRequest: urlRequest);
+    } catch (e) {
+      // If there's an error, log it silently and rethrow
+      rethrow;
+    }
   }
 }

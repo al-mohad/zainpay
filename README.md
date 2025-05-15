@@ -1,6 +1,6 @@
-<p align="center">  
+<p align="center">
    <img title="Zainpay" height="100" src="https://raw.githubusercontent.com/itcglobal/zainpay/main/zainpay.png" width="50%"/>
-</p>  
+</p>
 
 # Zainpay Flutter Package
 
@@ -17,11 +17,23 @@ The Flutter library helps you create seamless payment experiences in your flutte
 
 1. Zainpay Account [API Keys](https://zainpay.ng)
 2. Supported Flutter version >= 1.17.0
+3. Compatible with the latest Flutter SDK (3.29.x)
 
 ## Installation
 
-1. Add the dependency to your project. In your `pubspec.yaml`, file add: `zainpay: 0.1.22`.
+1. Add the dependency to your project. In your `pubspec.yaml`, file add: `zainpay: 0.2.0`.
 2. Run `flutter pub get`.
+
+## Features
+
+- **Secure Payments**: Process payments securely with bank transfers and card payments
+- **Virtual Accounts**: Create and manage virtual accounts for your customers
+- **Zainbox Management**: Create and manage Zainboxes for organizing your payments
+- **Transaction Verification**: Verify transactions to ensure they are successful
+- **Fund Transfers**: Transfer funds between accounts
+- **Comprehensive Logging**: Detailed logging for debugging and auditing
+- **Error Handling**: Robust error handling for a better user experience
+- **Responsive UI**: Beautiful and responsive UI components
 
 ## Usage
 
@@ -29,9 +41,9 @@ The Flutter library helps you create seamless payment experiences in your flutte
 
 To create an instance, you should call the Zainpay constructor. This constructor accepts a mandatory instance of the following:
 
--  `context`
--  `publicKey`
--  `isTest`
+- `context`
+- `publicKey`
+- `isTest`
 
 It returns an instance of Zainpay which we then call the async methods on for every feature requested.
 
@@ -187,6 +199,7 @@ Calling the `getZainboxCollectionSummaryByDate(zainboxCode, {dateFrom, dateTo})`
     }
 
 #### Note:
+
 dateTo and DateFrom are optional
 
 Calling the `createVirtualAccount(fullName, email, mobileNumber, zainboxCode)` method returns a Future of `CreateVirtualAccountResponse?` which we await for the actual response as seen above.
@@ -244,7 +257,6 @@ The `amount` parameter should be in kobo decimalisation, txnRef (unique per each
     } else {
         showLoading("No Response!");
     }
-
 
 #### Note:
 

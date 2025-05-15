@@ -1,6 +1,6 @@
 name: zainpay
 description: A flutter package to implement zainpay on your flutter application.
-version: 0.1.22
+version: 0.2.0
 homepage: "https://github.com/itcglobal/zainpay"
 
 environment:
@@ -16,9 +16,12 @@ dependencies:
   http: ^1.1.0
   font_awesome_flutter: ^10.6.0
   awesome_card: ^1.1.7
-  flutter_inappwebview: ^5.8.0
+  flutter_inappwebview: ^6.1.5
   fluttertoast: ^8.2.4
   overlay_support: ^2.1.0
+  logger: ^2.0.2+1
+  connectivity_plus: ^5.0.2
+  shared_preferences: ^2.2.2
 
 dev_dependencies:
   flutter_test:
@@ -32,8 +35,8 @@ dev_dependencies:
 flutter:
 
   # To add assets to your package, add an assets section, like this:
-  #  assets:
-  #    - assets/
+  assets:
+    - assets/
   #   - images/a_dot_ham.jpeg
   #
   # For details regarding assets in packages, see
